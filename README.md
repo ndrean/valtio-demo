@@ -1,5 +1,6 @@
 # Demo Valtio
 
+
 ## Rules
 
 - if you don't modify the state within a component, then: "snap the state and return from the snap". You can use simple functions or a custom hook in case you want to modifiy the snap, and return.
@@ -10,6 +11,7 @@
 
 ## Examples
 
+
 1.Wrap the state with `proxy` and make an immutable object from it with `useSnapshot`
 
 ```js
@@ -19,7 +21,6 @@ const store = proxy({index: 1})
 2.Read from `snap`, mutate/write from `proxy`
 
 ```js
-
 const Component = () => {
   const snap = useSnapshot(store)
 
@@ -36,7 +37,7 @@ const Component = () => {
 }
 ```
 
-2. `derive` can replace `useState` & `useEffect`
+3. `derive` can replace `useState` & `useEffect`
 
 We retrieve data from an API:
 
