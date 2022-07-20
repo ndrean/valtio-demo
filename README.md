@@ -1,70 +1,118 @@
-# Getting Started with Create React App
+# Demo Valtio
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Rules:
 
-## Available Scripts
+1.Wrap the state with `proxy` and make an immutable object from it with `useSnapshot`
 
-In the project directory, you can run:
+```js
+const store = proxy({index: 1})
+```
 
-### `npm start`
+2.Read from `snap`, mutate/write from `proxy`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```js
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+const Component = () => {
+  const snap = useSnapshot(store)
 
-### `npm test`
+  const double = n => n * 2
+  return(
+    <>
+      <button onClick={e => store.index = e.target.value}>Increment</button>
+      {JSON.stringify(snap)} 
+      {/* => {index: 1} */}
+      {JSON.stringify({double: double(snap.index)})}
+      {/* => {double: 2} */}
+    </>
+  )
+}
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. `derive` can replace `useState` & `useEffect`
 
-### `npm run build`
+We retrieve data from an API:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```js
+export const fetchComments = async (id) => {
+  const data = await fetch(
+    `https://jsonplaceholder.typicode.com/posts/${id}/comments`
+  );
+  return data.json();
+};
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Let our state be:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+ ```js
+ const store = proxy({index: 1, text: "hi"})
+ const commentStore = proxy({comments: []})
+ ```
 
-### `npm run eject`
+We can populate a component with using `useState` and `useEffect`:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```js
+const ComponentUseEffect = () => {
+  const { comments } = useSnapshot(commentStore);
+  const {index} = useSnapshot(store);
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+  const [users, setUsers] = React.useState([]);
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+  useEffect(() => {
+    const getUsers = async (id) => {
+      const list = await fetchComments(id);
+      return setUsers(list?.map((c) => c.email));
+    };
+    getUsers(index);
+  }, [index]);
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+  return <><pre>{JSON.stringify(users)}</pre></>
+};
+```
 
-## Learn More
+We can do the same with a derived proxy:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```js
+export const users = derive({
+  derUsers: async (get) => {
+    const list = await fetchComments(get(store).index);
+    return list?.map((c) => c.email);
+  },
+});
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+and use it in the component:
 
-### Code Splitting
+```js
+const ComponentDerive = ({store}) => {
+  const { derUsers } = useSnapshot(users);
+  return <><pre>{JSON.stringify(derUsers)}</pre></>
+};
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+and:
 
-### Analyzing the Bundle Size
+```js
+root.render(
+  <>
+<ComponentUseEffect store={store} commentStore={commentStore}>
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+<Suspense fallback={"Loading..."}>
+  <ComponentDerive store={users}/>
+</Suspense>
+</>
+)
+```
 
-### Making a Progressive Web App
+4. Gotcha: atomize the state
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+With we use the state above, `{index: 1, text: "hi"}`, and build a derivation from it, then any change on `index` or `text` will make the component render.
 
-### Advanced Configuration
+If we atomize further, and use  `{index: {value: 1}, text: "hi"}` instead, then we can segregate the effects. A change in `text` will not make the derivation render because we could fine-grain with `get`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```js
+export const users = derive({
+  derUsers: async (get) => {
+    const list = await fetchComments(get(store.index).value);
+    return list?.map((c) => c.email);
+  },
+});
