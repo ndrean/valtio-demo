@@ -1,9 +1,7 @@
-//import { specialCharMap } from '@testing-library/user-event/dist/keyboard';
 import React, { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 
 import './index.css';
-//import { store, commentStore, commentsUsers, textStore } from './state';
 import { store, commentStore, users, fetchComments } from './state';
 
 const Counter = ({ store }) => {
@@ -31,7 +29,11 @@ const Counter = ({ store }) => {
         </button>
       </p>
       <p>
-        <input value={text} onChange={(e) => (store.text = e.target.value)} />{' '}
+        <input
+          aria-label='text'
+          value={text}
+          onChange={(e) => (store.text = e.target.value)}
+        />{' '}
         {text}
       </p>
     </>
