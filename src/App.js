@@ -60,9 +60,19 @@ const Component1 = ({ store }) => {
 
 const capitalize = (t) => t.toUpperCase();
 
+const useTriple = (store) => {
+  const {
+    index: { value },
+  } = useSnapshot(store);
+  console.log(value * 3);
+  return value * 3;
+};
+
 const Component2 = ({ store }) => {
   const { index, text } = useSnapshot(store);
+
   const double = (id) => id * 2;
+  const triple = useTriple(store);
 
   const newSnap = { index: double(index.value), text: capitalize(text) };
   return (
@@ -73,6 +83,7 @@ const Component2 = ({ store }) => {
         Render actions with snap.action IN render ONLY
         {JSON.stringify(newSnap)}
       </pre>
+      <pre>{JSON.stringify({ triple })}</pre>
     </>
   );
 };
