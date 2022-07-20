@@ -3,22 +3,15 @@ import React, { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 
 import './index.css';
-//import { idxStore, commentStore, commentsUsers, textStore } from './state';
-import {
-  idxStore,
-  textStore,
-  commentStore,
-  commentsUsers,
-  fetchComments,
-} from './state';
-
-/*
-import { EditPerson, ViewPerson } from "./personComponent";
-import personState from "./personState";
-*/
+//import { store, commentStore, commentsUsers, textStore } from './state';
+import { store, commentStore, users, fetchComments } from './state';
 
 const Counter = ({ store }) => {
-  let { index } = useSnapshot(store);
+  const {
+    index: { value },
+    text,
+  } = useSnapshot(store);
+
   return (
     <>
       <p>
@@ -26,63 +19,52 @@ const Counter = ({ store }) => {
         will render
       </p>
       <p>
-        <button onClick={store.increment} disabled={store.index > 8}>
+        <button onClick={store.increment} disabled={store.index.value > 8}>
           Increment
         </button>{' '}
-        {index}{' '}
-        <button onClick={() => --store.index} disabled={store.index < 2}>
+        {value}
+        <button
+          onClick={() => --store.index.value}
+          disabled={store.index.value < 2}
+        >
           decrement
         </button>
+      </p>
+      <p>
+        <input value={text} onChange={(e) => (store.text = e.target.value)} />{' '}
+        {text}
       </p>
     </>
   );
 };
 
-const Text = ({ store }) => {
-  const { text } = useSnapshot(store);
-  return (
-    <p>
-      <input value={text} onChange={(e) => (store.text = e.target.value)} />{' '}
-      {text}
-    </p>
-  );
-};
-
-// eslint-disable-next-line react/prop-types
-const Component0 = ({ index, text }) => (
+const Component0 = ({ store }) => (
   <>
     <hr />
     <p>C0: no snap, no rendering, just initial state</p>
-    <pre>
-      {JSON.stringify(index)} {JSON.stringify(text)}
-    </pre>
+    <pre>{JSON.stringify(store)}</pre>
   </>
 );
 
 // eslint-disable-next-line react/prop-types
-const Component1 = ({ index, text }) => {
-  const snapIndex = useSnapshot(index);
-  const snapText = useSnapshot(text);
+const Component1 = ({ store }) => {
+  const snap = useSnapshot(store);
   return (
     <>
       <hr />
       <p>C1: snapped: rendered on every state update</p>
-      <pre>
-        {' '}
-        C1-snap: {JSON.stringify(snapIndex)} {JSON.stringify(snapText)}{' '}
-      </pre>
+      <pre> C1-snap: {JSON.stringify(snap)}</pre>
     </>
   );
 };
 
 const capitalize = (t) => t.toUpperCase();
 
-const Component2 = ({ idx, txt }) => {
-  const { index } = useSnapshot(idx);
-  const { text } = useSnapshot(txt);
+const Component2 = ({ store }) => {
+  const { index, text } = useSnapshot(store);
   const double = (id) => id * 2;
 
-  const newSnap = { index: double(index), text: capitalize(text) };
+  const newSnap = { index: double(index.value), text: capitalize(text) };
   return (
     <>
       <hr />
@@ -95,13 +77,12 @@ const Component2 = ({ idx, txt }) => {
   );
 };
 
-const Component3 = ({ index, text }) => {
-  const snapIndex = useSnapshot(index);
-  const snapText = useSnapshot(text);
+const Component3 = ({ store }) => {
+  const snap = useSnapshot(store);
 
   const action = () => {
-    text.setCapitalizedText();
-    index.tripleCount();
+    store.setCapitalizedText();
+    store.tripleCount();
   };
 
   return (
@@ -112,34 +93,36 @@ const Component3 = ({ index, text }) => {
         <button onClick={action}>Update state</button>
       </p>
 
-      <pre>Render snap:{JSON.stringify(snapIndex, snapText)}</pre>
+      <pre>Render snap:{JSON.stringify(snap)}</pre>
     </>
   );
 };
 
-const Fetch = ({ storeComments, idxStore }) => {
-  const { comments } = useSnapshot(storeComments);
+const Fetch = ({ commentStore, store }) => {
+  const { comments } = useSnapshot(commentStore);
 
-  const handleClick = () => storeComments.setComments();
-  const handleReset = () => (idxStore.index = 1);
+  const handleClick = () => commentStore.setComments();
+  const handleReset = () => (store.index.value = 1);
 
-  const { index } = useSnapshot(idxStore);
+  const {
+    index: { value },
+  } = useSnapshot(store);
+
   const [users, setUsers] = React.useState([]);
   useEffect(() => {
     const getUsers = async (id) => {
       const list = await fetchComments(id);
       return setUsers(list?.map((c) => c.email));
     };
-    getUsers(index);
-  }, [index]);
+    getUsers(value);
+  }, [value]);
 
-  //console.log(index);
   return (
     <>
       <hr />
       <button onClick={handleReset}>Reset index</button>
       <p>
-        Click on increment index to get new comments
+        Click on increment index to get the comments(:id)
         <button onClick={handleClick}>get comments(:id)</button>{' '}
       </p>
       <p>
@@ -154,40 +137,34 @@ const Fetch = ({ storeComments, idxStore }) => {
   );
 };
 
-const Component4 = ({ store }) => {
-  const { live } = useSnapshot(store);
+const Component4 = ({ users }) => {
+  const { derUsers } = useSnapshot(users);
   return (
     <>
       <p>
         Async update on action increment outside of a component without
         useEffect using derive:
       </p>
-      <pre>{JSON.stringify(live)}</pre>
+      <pre>{JSON.stringify(derUsers)}</pre>
     </>
   );
 };
 
 const App = () => (
   <>
-    <Counter store={idxStore} />
-    <Text store={textStore} />
-    <Component0 index={idxStore} text={textStore} />
-    <Component1 index={idxStore} text={textStore} />
-    <Component2 idx={idxStore} txt={textStore} />
+    <Counter store={store} />
+    <Component0 store={store} />
+    <Component1 store={store} />
+    <Component2 store={store} />
 
-    <Component3 index={idxStore} text={textStore} />
+    <Component3 store={store} />
     <hr />
-    <Counter store={idxStore} />
-    <Fetch storeComments={commentStore} idxStore={idxStore} />
+    <Counter store={store} />
+    <Fetch commentStore={commentStore} store={store} />
     <React.Suspense fallback={null}>
-      <Component4 store={commentsUsers} />
+      <Component4 users={users} />
     </React.Suspense>
     <hr />
-
-    {/*}
-    <EditPerson store={personState} />
-    <ViewPerson store={personState} />
-    */}
   </>
 );
 
