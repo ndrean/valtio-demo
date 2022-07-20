@@ -1,16 +1,23 @@
 # Demo Valtio
 
-
 ## Rules
 
-- if you don't modify the state within a component, then: "snap the state and return from the snap". You can use simple functions or a custom hook in case you want to modifiy the snap, and return.
+Wrap the state with `proxy` and pass it to `useSnapshot` within a component.
 
-- if you want a sync state mutation, then define an action on the proxy of the state (no `this`), not on the snap. Then the rule.
+Rule 1: read only from snap to be reactive, and write only to the state
+Rule 2: in particular, in callbacks, use state, not snaps.
 
-- if you call an async action, then you would traditionally the combo `useState`+ `useEffect`. It is equivalent to a derived proxy.  Use the rule with the derived proxy and `suspend`** the component that consumed it. Suspending is not mandatory with `useEffect`.
+## Tips
+
+If you want to display a modified reactive state but not persist this state, you can simply pass the snap in a function. It can also be a custom hook, inside or outside of the component. See examples below.
+
+Don't modify the state within a component but the state. For example, in callback, use state.
+
+If you want a sync state mutation, then define an action on the proxy of the state (no `this`), not on the snap. Then the rules.
+
+If you call an async action, then you would traditionally the combo `useState`+ `useEffect`. It is equivalent to a derived proxy.  Use the rule with the derived proxy and **`suspend`** the component that consumed it. Note that suspending is not mandatory with `useEffect`.
 
 ## Examples
-
 
 1.Wrap the state with `proxy` and make an immutable object from it with `useSnapshot`
 
@@ -18,11 +25,18 @@
 const store = proxy({index: 1})
 ```
 
-2.Read from `snap`, mutate/write from `proxy`
+2.Read/return from `snap`, mutate/write from `proxy`.
 
 ```js
+
+const useTriple = (store) => {
+  const {index} = useSnapshot(store)
+  return index * 3
+}
+
 const Component = () => {
   const snap = useSnapshot(store)
+  const triple = useTriple(store)
 
   const double = n => n * 2
   return(
@@ -32,6 +46,8 @@ const Component = () => {
       {/* => {index: 1} */}
       {JSON.stringify({double: double(snap.index)})}
       {/* => {double: 2} */}
+      {JSON.stringify({triple})}
+       {/* => {triple: 3} */}
     </>
   )
 }
