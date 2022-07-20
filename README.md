@@ -1,6 +1,16 @@
 # Demo Valtio
 
-Rules:
+
+## Rules
+
+- if you don't modify the state within a component, then: "snap the state and return from the snap". You can use simple functions or a custom hook in case you want to modifiy the snap, and return.
+
+- if you want a sync state mutation, then define an action on the proxy of the state (no `this`), not on the snap. Then the rule.
+
+- if you call an async action, then you would traditionally the combo `useState`+ `useEffect`. It is equivalent to a derived proxy.  Use the rule with the derived proxy and `suspend`** the component that consumed it. Suspending is not mandatory with `useEffect`.
+
+## Examples
+
 
 1.Wrap the state with `proxy` and make an immutable object from it with `useSnapshot`
 
@@ -11,7 +21,6 @@ const store = proxy({index: 1})
 2.Read from `snap`, mutate/write from `proxy`
 
 ```js
-
 const Component = () => {
   const snap = useSnapshot(store)
 
@@ -28,7 +37,7 @@ const Component = () => {
 }
 ```
 
-2. `derive` can replace `useState` & `useEffect`
+3. `derive` can replace `useState` & `useEffect`
 
 We retrieve data from an API:
 
