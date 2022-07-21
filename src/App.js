@@ -2,14 +2,7 @@ import React, { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 
 import './index.css';
-import {
-  store,
-  commentStore,
-  users,
-  fetchComments,
-  derDummy,
-  dummy,
-} from './state';
+import { store, commentStore, users, fetchComments } from './state';
 
 const Counter = ({ store }) => {
   const {
@@ -19,7 +12,7 @@ const Counter = ({ store }) => {
 
   return (
     <>
-      <p>The state has two props: {JSON.stringify(store)}</p>
+      <p> We modify below the two components of the state:</p>
       <p>
         <button onClick={store.increment} disabled={store.index.value > 8}>
           Increment
@@ -155,7 +148,6 @@ const Component22 = ({ store }) => {
 };
 const Component23 = ({ store }) => {
   const snap = useSnapshot(store);
-  console.log('23', store.index.value);
   const [val, setVal] = React.useState(1);
   React.useEffect(() => {
     setVal(store.tripled());
@@ -205,8 +197,6 @@ const Fetch = ({ commentStore }) => {
   return (
     <>
       <hr />
-      <p>We need to atomize the components to limit rendering.</p>
-
       <p>
         Async update change on click action:{' '}
         <button onClick={handleClick}>get comments(:id)</button>{' '}
@@ -252,17 +242,17 @@ const Component4 = ({ users }) => {
   );
 };
 
-const ComponentDummy = ({ store, dumm }) => {
-  const snap = useSnapshot(store);
-  const snap2 = useSnapshot(dumm);
-  console.log(snap2, snap);
-  return null;
-};
 const App = () => (
   <>
     <p>
       Rule 1: read from snap, write on state. In particular, no snap in
       callbacks
+    </p>
+    <p>
+      Tip: atomize the components to limit rendering as well as the state.
+      Instead of {JSON.stringify({ index: 1, text: 'hi' })}, we will use{' '}
+      {JSON.stringify({ index: { value: 1 }, text: 'hi' })} so that we can
+      segregate the rendering.
     </p>
 
     <Counter store={store} />
@@ -283,7 +273,7 @@ const App = () => (
     <React.Suspense fallback={null}>
       <Component4 users={users} />
     </React.Suspense>
-    <ComponentDummy store={derDummy} dumm={dummy} />
+
     <hr />
   </>
 );
