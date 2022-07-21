@@ -2,7 +2,14 @@ import React, { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 
 import './index.css';
-import { store, commentStore, users, fetchComments } from './state';
+import {
+  store,
+  commentStore,
+  users,
+  fetchComments,
+  derDummy,
+  dummy,
+} from './state';
 
 const Counter = ({ store }) => {
   const {
@@ -12,10 +19,7 @@ const Counter = ({ store }) => {
 
   return (
     <>
-      <p>
-        You can mutate the state. Rule: no snap in callback, but state. This
-        will render
-      </p>
+      <p>The state has two props: {JSON.stringify(store)}</p>
       <p>
         <button onClick={store.increment} disabled={store.index.value > 8}>
           Increment
@@ -43,7 +47,10 @@ const Counter = ({ store }) => {
 const Component0 = ({ store }) => (
   <>
     <hr />
-    <p>C0: no snap, no rendering, just initial state</p>
+    <p>
+      C0: We are <strong>reading from state</strong>, a mutable object, so this
+      is <strong>not</strong> reactive
+    </p>
     <pre>{JSON.stringify(store)}</pre>
   </>
 );
@@ -54,38 +61,109 @@ const Component1 = ({ store }) => {
   return (
     <>
       <hr />
-      <p>C1: snapped: rendered on every state update</p>
+      <p>
+        C1: we are <strong>reading from snap</strong>, an immutable object. This
+        will render any change in both props
+      </p>
       <pre> C1-snap: {JSON.stringify(snap)}</pre>
+    </>
+  );
+};
+
+const Component11 = ({ store }) => {
+  const {
+    index: { value },
+  } = useSnapshot(store);
+  return (
+    <>
+      <p>
+        The component below only snaps one prop from state, the value. It will
+        not render changes on text (use React dev tools)
+      </p>
+      <button
+        onClick={() => ++store.index.value}
+        disabled={store.index.value > 8}
+      >
+        Increment
+      </button>
+      {value}
+    </>
+  );
+};
+
+const Component12 = ({ store }) => {
+  const { text } = useSnapshot(store);
+  return (
+    <>
+      <p>
+        This component only snaps one prop from state, the text. It will not
+        render changes on <strong>value</strong> (use react dev tools).
+      </p>
+      <input
+        aria-label='text'
+        value={text}
+        onChange={(e) => (store.text = e.target.value)}
+      />{' '}
+      {text}
     </>
   );
 };
 
 const capitalize = (t) => t.toUpperCase();
 
-const useTriple = (store) => {
+const useDouble = (store) => {
   const {
     index: { value },
   } = useSnapshot(store);
-  console.log(value * 3);
-  return value * 3;
+  return value * 2;
 };
 
 const Component2 = ({ store }) => {
   const { index, text } = useSnapshot(store);
 
   const double = (id) => id * 2;
-  const triple = useTriple(store);
+  const doubled = useDouble(store);
 
-  const newSnap = { index: double(index.value), text: capitalize(text) };
+  const newSnap = {
+    doubleSimpleFunction: double(index.value),
+    capitalized: capitalize(text),
+  };
   return (
     <>
       <hr />
-      <p>C2: Computed Action on the snap in the render (state unchanged)</p>
-      <pre>
-        Render actions with snap.action IN render ONLY
-        {JSON.stringify(newSnap)}
-      </pre>
-      <pre>{JSON.stringify({ triple })}</pre>
+      <p>C2: we want to render computed values</p>
+      <p>
+        We use a function to compute new values from the snap and render them:
+      </p>
+      <pre>{JSON.stringify(newSnap)}</pre>
+      <p>We can use a custom hook too:</p>
+      <pre>{JSON.stringify({ doubledCustom: doubled })}</pre>
+    </>
+  );
+};
+
+const Component22 = ({ store }) => {
+  return (
+    <>
+      <p>
+        If we use a computation using the state, it will not render changes
+        since the state is mutable
+      </p>
+      <pre>{JSON.stringify({ triple: store.tripled() })}</pre>
+    </>
+  );
+};
+const Component23 = ({ store }) => {
+  const snap = useSnapshot(store);
+  console.log('23', store.index.value);
+  const [val, setVal] = React.useState(1);
+  React.useEffect(() => {
+    setVal(store.tripled());
+  }, [snap]);
+  return (
+    <>
+      <p>Alternatively, we can also use useEffect with dependency on snap</p>
+      <pre>{JSON.stringify({ tripleUseEffect: val })}</pre>
     </>
   );
 };
@@ -102,21 +180,43 @@ const Component3 = ({ store }) => {
     <>
       <hr />
       <p>
-        C3: Mutations on state, not on snap!{' '}
+        C3: Mutations on state, not on snap! Click to render:{' '}
         <button onClick={action}>Update state</button>
       </p>
 
-      <pre>Render snap:{JSON.stringify(snap)}</pre>
+      <pre>{JSON.stringify(snap)}</pre>
     </>
   );
 };
 
-const Fetch = ({ commentStore, store }) => {
+const Reset = ({ store }) => {
+  const handleReset = () => (store.index.value = 1);
+  return (
+    <>
+      <button onClick={handleReset}>Reset index</button>
+    </>
+  );
+};
+const Fetch = ({ commentStore }) => {
   const { comments } = useSnapshot(commentStore);
 
   const handleClick = () => commentStore.setComments();
-  const handleReset = () => (store.index.value = 1);
 
+  return (
+    <>
+      <hr />
+      <p>We need to atomize the components to limit rendering.</p>
+
+      <p>
+        Async update change on click action:{' '}
+        <button onClick={handleClick}>get comments(:id)</button>{' '}
+      </p>
+      <pre>{JSON.stringify(comments?.map((c) => c.email))}</pre>
+    </>
+  );
+};
+
+const Fetch2 = ({ store }) => {
   const {
     index: { value },
   } = useSnapshot(store);
@@ -129,22 +229,12 @@ const Fetch = ({ commentStore, store }) => {
     };
     getUsers(value);
   }, [value]);
-
   return (
     <>
-      <hr />
-      <button onClick={handleReset}>Reset index</button>
       <p>
-        Click on increment index to get the comments(:id)
-        <button onClick={handleClick}>get comments(:id)</button>{' '}
+        Comment async auto-updating to :id via classic{' '}
+        <strong>useState/useEffect</strong>
       </p>
-      <p>
-        Async update on internal component action get comments without useState
-        or useEffect
-      </p>
-      <p>Comments change on click: </p>
-      <pre>{JSON.stringify(comments?.map((c) => c.email))}</pre>
-      <p>Comments via UseEffect</p>
       <pre>{JSON.stringify(users)}</pre>
     </>
   );
@@ -155,28 +245,45 @@ const Component4 = ({ users }) => {
   return (
     <>
       <p>
-        Async update on action increment outside of a component without
-        useEffect using derive:
+        Users async auto-updateing to :id via <strong>derivation</strong>
       </p>
       <pre>{JSON.stringify(derUsers)}</pre>
     </>
   );
 };
 
+const ComponentDummy = ({ store, dumm }) => {
+  const snap = useSnapshot(store);
+  const snap2 = useSnapshot(dumm);
+  console.log(snap2, snap);
+  return null;
+};
 const App = () => (
   <>
+    <p>
+      Rule 1: read from snap, write on state. In particular, no snap in
+      callbacks
+    </p>
+
     <Counter store={store} />
     <Component0 store={store} />
     <Component1 store={store} />
+    <Component11 store={store} />
+    <Component12 store={store} />
     <Component2 store={store} />
+    <Component22 store={store} />
+    <Component23 store={store} />
 
     <Component3 store={store} />
     <hr />
     <Counter store={store} />
+    <Reset store={store} />
     <Fetch commentStore={commentStore} store={store} />
+    <Fetch2 store={store} />
     <React.Suspense fallback={null}>
       <Component4 users={users} />
     </React.Suspense>
+    <ComponentDummy store={derDummy} dumm={dummy} />
     <hr />
   </>
 );
