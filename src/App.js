@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 
 import './index.css';
-import { store, commentStore, users, fetchComments } from './state';
+import { store, commentStore, users, fetchComments, sse } from './state';
+// SSE
 
 const Counter = ({ store }) => {
   const {
@@ -146,22 +147,12 @@ const Component22 = ({ store }) => {
     </>
   );
 };
-const Component23 = ({ store }) => {
-  const snap = useSnapshot(store);
-  const [val, setVal] = React.useState(1);
-  React.useEffect(() => {
-    setVal(store.tripled());
-  }, [snap]);
-  return (
-    <>
-      <p>Alternatively, we can also use useEffect with dependency on snap</p>
-      <pre>{JSON.stringify({ tripleUseEffect: val })}</pre>
-    </>
-  );
-};
 
 const Component3 = ({ store }) => {
-  const snap = useSnapshot(store);
+  const {
+    index: { value },
+    text,
+  } = useSnapshot(store);
 
   const action = () => {
     store.setCapitalizedText();
@@ -176,7 +167,7 @@ const Component3 = ({ store }) => {
         <button onClick={action}>Update state</button>
       </p>
 
-      <pre>{JSON.stringify(snap)}</pre>
+      <pre>{JSON.stringify({ value, text })}</pre>
     </>
   );
 };
@@ -192,7 +183,7 @@ const Reset = ({ store }) => {
 const Fetch = ({ commentStore }) => {
   const { comments } = useSnapshot(commentStore);
 
-  const handleClick = () => commentStore.setComments();
+  const handleClick = () => commentStore.getComments();
 
   return (
     <>
@@ -242,6 +233,40 @@ const Component4 = ({ users }) => {
   );
 };
 
+const Component51 = () => {
+  const [msg, setMsg] = React.useState(null);
+  React.useEffect(() => {
+    const source = new EventSource('http://localhost:4000/sse');
+    source.onmessage = (e) => {
+      console.log('effect', e.data);
+      setMsg(e.data);
+    };
+    return () => source.close();
+  }, []);
+
+  return <pre>New message arrived via useEffect: {msg}</pre>;
+};
+
+/*
+const getSSE = (store) => {
+  const {
+    sse: { message },
+  } = useSnapshot(store);
+  const evtSource = new EventSource('http://localhost:4000/sse');
+  evtSource.onmessage = (e) => (store.sse.message = e.data);
+  return message;
+};
+*/
+
+const Component52 = ({ store }) => {
+  sse.getMsg;
+  const {
+    sse: { message },
+  } = useSnapshot(store);
+  console.log('valtio', message);
+  return <pre>New message arrived via internal store: {message}</pre>;
+};
+
 const App = () => (
   <>
     <p>
@@ -262,7 +287,6 @@ const App = () => (
     <Component12 store={store} />
     <Component2 store={store} />
     <Component22 store={store} />
-    <Component23 store={store} />
 
     <Component3 store={store} />
     <hr />
@@ -270,12 +294,14 @@ const App = () => (
     <Reset store={store} />
     <Fetch commentStore={commentStore} store={store} />
     <Fetch2 store={store} />
-    <React.Suspense fallback={null}>
+    <React.Suspense fallback={'Loading...'}>
       <Component4 users={users} />
     </React.Suspense>
-
     <hr />
+    <p>Receiving Server Sent Events from a server</p>
+    <Component51 />
+    <Component52 store={store} sse={sse} />
   </>
 );
-
+// sse = { SSE };
 export default App;

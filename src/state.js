@@ -13,6 +13,8 @@ export const fetchComments = async (id) => {
 export const store = proxy({
   index: { value: 1 },
   text: 'hi',
+  sse: { message: null },
+
   increment: () => (store.index.value += 1),
   decrement: () => (store.index.value -= 1),
   tripleCount: () => (store.index.value *= 3),
@@ -23,7 +25,7 @@ export const store = proxy({
 
 export const commentStore = proxy({
   comments: null,
-  setComments: async () =>
+  getComments: async () =>
     (commentStore.comments = await fetchComments(store.index.value)),
 });
 
@@ -34,5 +36,12 @@ export const users = derive({
   },
 });
 
-// const unsub = devtools(inputStore, { name: 'input', enabled: true });
-// const unbus = devtools(commentsUsers, { name: 'commusers', enabled: true });
+export const sse = derive({
+  getMsg: (get) => {
+    const evtSource = new EventSource('http://localhost:4000/sse');
+    evtSource.addEventListener('message', (e) => {
+      console.log(e.data, e.lastEventId);
+      get(store.sse).message = e.data;
+    });
+  },
+});
