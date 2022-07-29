@@ -14,7 +14,14 @@ export const store = proxy({
   index: { value: 1 },
   text: 'hi',
   sse: { message: null },
-
+  post: { messagge_post: null },
+  // getMsg: () => {
+  //   const evtSource = new EventSource(process.env.REACT_APP_SSE_URL);
+  //   evtSource.addEventListener('message', (e) => {
+  //     console.log(e.data, e.lastEventId);
+  //     store.sse.message = e.data;
+  //   });
+  // },
   increment: () => (store.index.value += 1),
   decrement: () => (store.index.value -= 1),
   tripleCount: () => (store.index.value *= 3),
@@ -38,10 +45,15 @@ export const users = derive({
 
 export const sse = derive({
   getMsg: (get) => {
-    const evtSource = new EventSource('http://localhost:4000/sse');
+    const evtSource = new EventSource(process.env.REACT_APP_SSE_URL);
     evtSource.addEventListener('message', (e) => {
       console.log(e.data, e.lastEventId);
       get(store.sse).message = e.data;
+    });
+    const evtSource2 = new EventSource(process.env.REACT_APP_SSE_URL_POST);
+    evtSource2.addEventListener('message', (e) => {
+      console.log(e.data, e.lastEventId);
+      get(store.post).message_post = e.data;
     });
   },
 });

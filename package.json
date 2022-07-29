@@ -2,6 +2,7 @@
   "name": "valtio-demo",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://localhost:4043/sse",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
@@ -14,6 +15,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "start https": "HTTPS=true&&SSL_CRT_FILE=./localhost.pem&&SSL_KEY_FILE=./localhost-key.pem react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
