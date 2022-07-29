@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 
 import './index.css';
-import { store, commentStore, users, fetchComments, sse } from './state';
+import { store, commentStore, users, fetchComments } from './state';
 // SSE
 
 const Counter = ({ store }) => {
@@ -233,38 +233,59 @@ const Component4 = ({ users }) => {
   );
 };
 
+/*
 const Component51 = () => {
   const [msg, setMsg] = React.useState(null);
+  const [res, setRes] = React.useState(null);
+  const { derUsers } = useSnapshot(users);
+
   React.useEffect(() => {
-    const source = new EventSource('http://localhost:4000/sse');
-    source.onmessage = (e) => {
-      console.log('effect', e.data);
-      setMsg(e.data);
+    const source = new EventSource(process.env.REACT_APP_SSE_URL);
+    source.addEventListener('message', handleMsg);
+
+    return () => {
+      source.removeEventListener('message', handleMsg);
+      source.close();
     };
-    return () => source.close();
   }, []);
 
-  return <pre>New message arrived via useEffect: {msg}</pre>;
-};
+  const handleMsg = (e) => {
+    console.log('effect', e.data);
+    setMsg(e.data);
+    const data = e.data;``
+    setRes(
+      Object.values(derUsers).find((user) => user[0] === data?.toUpperCase())
+    );
+  };`
 
-/*
-const getSSE = (store) => {
-  const {
-    sse: { message },
-  } = useSnapshot(store);
-  const evtSource = new EventSource('http://localhost:4000/sse');
-  evtSource.onmessage = (e) => (store.sse.message = e.data);
-  return message;
+  return (
+    <pre>
+      New message arrived via useEffect: {msg} then {res}
+    </pre>
+  );
 };
 */
 
 const Component52 = ({ store }) => {
-  sse.getMsg;
   const {
-    sse: { message },
+    sse: { message, message_post },
   } = useSnapshot(store);
-  console.log('valtio', message);
-  return <pre>New message arrived via internal store: {message}</pre>;
+  // const { derUsers } = useSnapshot(users);
+
+  // const res = Object.values(derUsers).find(
+  //   (user) => user[0] === message?.toUpperCase()
+  // );
+
+  console.log('valtio', message, message_post);
+  return (
+    <>
+      <pre>{message_post}</pre>
+      <pre>
+        New message arrived via internal store: {message}. Any user with this
+        letter?
+      </pre>
+    </>
+  );
 };
 
 const App = () => (
@@ -299,9 +320,13 @@ const App = () => (
     </React.Suspense>
     <hr />
     <p>Receiving Server Sent Events from a server</p>
-    <Component51 />
-    <Component52 store={store} sse={sse} />
+    {/* <React.Suspense fallback={'Loading..'}>
+      <Component51 />
+    </React.Suspense> */}
+    {/* <Component51 /> */}
+    {/* <React.Suspense fallback={'Loading..'}> */}
+    <Component52 store={store} />
+    {/* </React.Suspense> */}
   </>
 );
-// sse = { SSE };
 export default App;
