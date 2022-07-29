@@ -13,7 +13,8 @@ export const fetchComments = async (id) => {
 export const store = proxy({
   index: { value: 1 },
   text: 'hi',
-  sse: { message: null, message_post: null },
+  sse: { message: null },
+  post: { messagge_post: null },
   // getMsg: () => {
   //   const evtSource = new EventSource(process.env.REACT_APP_SSE_URL);
   //   evtSource.addEventListener('message', (e) => {
@@ -52,7 +53,7 @@ export const sse = derive({
     const evtSource2 = new EventSource(process.env.REACT_APP_SSE_URL_POST);
     evtSource2.addEventListener('message', (e) => {
       console.log(e.data, e.lastEventId);
-      get(store.sse).message_post = e.data;
+      get(store.post).message_post = e.data;
     });
   },
 });

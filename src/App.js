@@ -266,26 +266,32 @@ const Component51 = () => {
 };
 */
 
-const Component52 = ({ store }) => {
+const Component52 = ({ store, users }) => {
   const {
-    sse: { message, message_post },
+    sse: { message },
   } = useSnapshot(store);
-  // const { derUsers } = useSnapshot(users);
+  const { derUsers } = useSnapshot(users);
 
-  // const res = Object.values(derUsers).find(
-  //   (user) => user[0] === message?.toUpperCase()
-  // );
-
-  console.log('valtio', message, message_post);
-  return (
-    <>
-      <pre>{message_post}</pre>
-      <pre>
-        New message arrived via internal store: {message}. Any user with this
-        letter?
-      </pre>
-    </>
+  let res = Object.values(derUsers).find(
+    (user) => user[0] === JSON.parse(message).msg.toUpperCase()
   );
+
+  console.log(Object.values(derUsers).find((user) => user[0] === 'E'));
+  // console.log('valtio', message?.msg[0]?.toUpperCase(), res);
+  return (
+    <pre>
+      New message arrived via internal store: {message}. Any user with this
+      letter? {res}
+    </pre>
+  );
+};
+const Component53 = ({ store }) => {
+  const {
+    post: { message_post },
+  } = useSnapshot(store);
+
+  console.log('valtio', message_post);
+  return <pre>{message_post}</pre>;
 };
 
 const App = () => (
@@ -324,9 +330,10 @@ const App = () => (
       <Component51 />
     </React.Suspense> */}
     {/* <Component51 /> */}
-    {/* <React.Suspense fallback={'Loading..'}> */}
-    <Component52 store={store} />
-    {/* </React.Suspense> */}
+    <React.Suspense fallback={'Loading..'}>
+      <Component52 store={store} users={users} />
+    </React.Suspense>
+    <Component53 store={store} />
   </>
 );
 export default App;
