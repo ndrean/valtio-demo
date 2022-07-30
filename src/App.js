@@ -210,6 +210,7 @@ const Fetch2 = ({ store }) => {
     };
     getUsers(value);
   }, [value]);
+
   return (
     <>
       <p>
@@ -226,7 +227,7 @@ const Component4 = ({ users }) => {
   return (
     <>
       <p>
-        Users async auto-updateing to :id via <strong>derivation</strong>
+        Users async auto-updating to :id via <strong>derivation</strong>
       </p>
       <pre>{JSON.stringify(derUsers)}</pre>
     </>
@@ -273,11 +274,9 @@ const Component52 = ({ store, users }) => {
   const { derUsers } = useSnapshot(users);
 
   let res = Object.values(derUsers).find(
-    (user) => user[0] === JSON.parse(message).msg.toUpperCase()
+    (user) => user[0] === JSON.parse(message)?.msg.toUpperCase()
   );
 
-  console.log(Object.values(derUsers).find((user) => user[0] === 'E'));
-  // console.log('valtio', message?.msg[0]?.toUpperCase(), res);
   return (
     <pre>
       New message arrived via internal store: {message}. Any user with this
@@ -290,7 +289,7 @@ const Component53 = ({ store }) => {
     post: { message_post },
   } = useSnapshot(store);
 
-  console.log('valtio', message_post);
+  if (message_post) console.log('valtio', JSON.parse(message_post));
   return <pre>{message_post}</pre>;
 };
 

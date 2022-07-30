@@ -11,11 +11,10 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "source-map-explorer": "^2.5.2",
-    "valtio": "^1.6.2",
+    "valtio": "^1.6.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start https": "HTTPS=true&&SSL_CRT_FILE=./localhost.pem&&SSL_KEY_FILE=./localhost-key.pem react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
